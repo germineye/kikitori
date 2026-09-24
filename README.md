@@ -66,4 +66,3 @@ Application source: MIT. Whisper model: Apache-2.0. kuromoji/IPADIC retains its 
 See [VALIDATION.md](VALIDATION.md) for the actual checks completed in the authoring environment and remaining verification work.
 
 References: [Transformers.js pipelines](https://huggingface.co/docs/transformers.js/api/pipelines), [Whisper Small timestamped ONNX](https://huggingface.co/onnx-community/whisper-small_timestamped), [Vite GitHub Pages guide](https://vite.dev/guide/static-deploy.html#github-pages), [Drive download guidance](https://developers.google.com/workspace/drive/api/guides/manage-downloads), [Drive resource keys](https://developers.google.com/workspace/drive/api/guides/resource-keys).
-

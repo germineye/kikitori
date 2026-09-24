@@ -209,4 +209,3 @@ export async function handleRequest(request, fetchImpl = fetch) {
 }
 
 export default { fetch: handleRequest };
-

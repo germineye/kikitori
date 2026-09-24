@@ -123,4 +123,3 @@ transcribe.addEventListener('click',async()=>{
   }catch(err){if(run===generation){processing=false;controls();status('');error((err as Error).message);}}
 });
 window.addEventListener('pagehide',()=>{stop();if(objectURL)URL.revokeObjectURL(objectURL);});
-

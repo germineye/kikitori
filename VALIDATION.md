@@ -43,4 +43,3 @@ The checks below record the earlier Whisper Base implementation and are retained
 - Boundary refinement was added after the live run to stop unpunctuated polite answers from merging into the next numbered exercise; that change passed targeted tests and production build.
 
 Network access was granted during authoring; package installation, local tests, production build, anonymous Drive download and browser inference now work. GitHub CI also runs install, test and build on pushes. Passing technical checks does not establish transcript accuracy.
-

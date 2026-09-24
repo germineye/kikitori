@@ -60,4 +60,3 @@ test('Worker rejects cross-origin use, unsafe redirects and oversized files', as
   const oversized = await handleRequest(browserRequest(), async () => new Response(mp3, { headers: { 'Content-Length': String(MAX_BYTES + 1) } }));
   assert.equal(oversized.status, 413);
 });
-
