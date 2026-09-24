@@ -5,7 +5,7 @@
 - The Cloudflare Worker implementation follows the same public-file/allowlisted-host policy as the Node relay and streams audio without buffering the full file.
 - `pnpm test` passes 21 deterministic tests, including CORS, redirects, Drive confirmation, audio response, and size limits for the Worker. `pnpm build` passes.
 - A live call through the Worker handler from the authoring environment returned the user's public `122.mp3` (1,685,683 bytes, audio/mpeg). This confirms the code path locally; deployment and a Cloudflare-origin test remain outstanding.
-- A direct browser fetch of the Google download URL failed. The GitHub Pages frontend therefore requires the configured Worker URL; a response that succeeds from Node does not prove browser CORS access.
+- A direct browser fetch of both Google download URLs failed on the deployed `germineye.github.io/kikitori/` origin with the user's public sample. A browser-shaped cross-site request to each URL returned HTTP 403 without a CORS allow-origin header. The GitHub Pages frontend therefore requires a configured relay URL; a download that succeeds from Node does not prove browser access.
 
 ## GitHub Pages and transcription update
 
