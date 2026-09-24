@@ -29,7 +29,10 @@ self.onmessage=async(event:MessageEvent<{samples:Float32Array;duration:number}>)
     try {
       for(const sentence of sentences){
         status(`Đang dịch câu ${sentence.id+1}/${sentences.length}…`);
-        const output=await translator(sentence.text,{src_lang:'jpn_Jpan',tgt_lang:'vie_Latn',max_new_tokens:256});
+        // TranslationPipeline accepts language codes at runtime; v3's inherited
+        // GenerationConfig type does not declare these tokenizer options.
+        const translationOptions={src_lang:'jpn_Jpan',tgt_lang:'vie_Latn',max_new_tokens:256};
+        const output=await translator(sentence.text,translationOptions);
         const first=output[0];
         const translated=Array.isArray(first)?first[0]:first;
         self.postMessage({type:'translation',id:sentence.id,text:translated.translation_text});
