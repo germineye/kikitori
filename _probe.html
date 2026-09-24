@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8"><title>Drive CORS check</title><pre id="result">Checking…</pre><script>
+const id = new URLSearchParams(location.search).get('id');
+const output = document.querySelector('#result');
+if (!/^[A-Za-z0-9_-]{10,200}$/.test(id ?? '')) output.textContent='Invalid ID';
+else {
+  const urls = [
+    'https://drive.usercontent.google.com/download?export=download&id=' + encodeURIComponent(id),
+    'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id)
+  ];
+  Promise.all(urls.map(async url => {
+    try {
+      const response = await fetch(url, {mode:'cors', credentials:'omit'});
+      const reader = response.body?.getReader();
+      const first = reader ? await reader.read() : {value:null};
+      await reader?.cancel();
+      return {url, status:response.status, type:response.headers.get('content-type'), bytes:first.value?.length ?? 0};
+    } catch (error) { return {url, error:String(error)}; }
+  })).then(results => {output.textContent=JSON.stringify(results,null,2);});
+}
+</script>
