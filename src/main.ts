@@ -23,12 +23,12 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML=`
     <div id="status" class="status" role="status" aria-live="polite" hidden></div>
     <div id="error" class="error" role="alert" hidden></div>
     <section class="transcript-section" aria-labelledby="transcript-title"><div class="section-label transcript-heading"><h2 id="transcript-title">02 <span>Bản nghe</span><small id="sentence-count"></small></h2><fieldset class="furigana"><legend>Furigana</legend><label><input type="radio" name="furigana" value="hover" checked/><span>Hover</span></label><label><input type="radio" name="furigana" value="always"/><span>Always</span></label></fieldset></div>
-      <div id="empty"><span class="empty-mark" lang="ja">あ</span><p>Bài nghe của bạn bắt đầu ở đây.</p><span>Chọn hoặc kéo thả audio, rồi tạo transcript để nghe lại từng câu.</span></div>
+      <div id="empty"><span class="empty-mark" lang="ja">あ</span><p>Bài nghe của bạn bắt đầu ở đây.</p></div>
       <div id="transcript"></div>
       <p id="transcript-note" class="transcript-note" hidden>Chạm hoặc nhấn Enter vào câu để nghe từ đó. Furigana hiện khi di chuột hoặc lấy nét; trên điện thoại có thể chọn Always. Mốc có dấu ≈ là thời gian ước lượng khi tách câu. AI có thể nghe hoặc đọc tên riêng sai.</p>
     </section>
   </main>
-  <footer><span lang="ja">少しずつ、毎日。</span><span>Audio và transcript ở lại trên máy bạn.</span></footer>
+  <footer><span lang="ja">少しずつ、毎日。</span></footer>
 </div>`;
 
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
