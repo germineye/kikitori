@@ -2,11 +2,15 @@
 
 ## Completed locally
 
-- 13 deterministic core tests passed, zero failures or skips (including Drive confirmation-form parsing).
+- 14 deterministic core tests passed, zero failures or skips (including Drive confirmation-form parsing and unpunctuated exercise boundaries).
 - Dependencies installed and pnpm lockfile generated.
 - TypeScript check and Vite production build passed.
 - Live anonymous Drive download succeeded for the user-provided MP3 (1,685,683 bytes), using the actual relay implementation.
 - The production browser app opened the same Drive link as 122.mp3, duration 01:44.
+- Real browser Whisper inference produced Japanese transcript rows; NLLB produced Vietnamese translations.
+- Dictionary furigana loaded (45 ruby annotations in the sample); Always made readings visible and Hover hid them by default.
+- Clicking a transcript row moved playback to approximately 00:48 and started audio; the highlighted sentence followed playback.
+- GitHub CI passed install, all tests, TypeScript checking and the production build on commit 2b51e58.
 - All five TypeScript modules parse successfully after Node's TypeScript stripping. This is syntax checking, not TypeScript type checking.
 - Browser UI opened successfully using a temporary source-only verification server (not the production Vite build).
 - Local WAV selected through the real file picker; duration displayed as 00:04.
@@ -18,7 +22,7 @@
 ## Remaining verification
 
 - Live Google confirmation-page behavior for larger files (parser is covered by fixtures).
-- Actual Whisper and NLLB inference in a browser, Japanese accuracy and Vietnamese translation quality on a choukai recording.
-- Furigana dictionary loading and sentence interaction with real inference results.
+- Accuracy tuning and evaluation across more recordings. The tested Whisper Base/NLLB baseline made recognizable errors in Japanese words, names and Vietnamese meaning. Treat this as a working prototype, not a reliable answer key.
+- Boundary refinement was added after the live run to stop unpunctuated polite answers from merging into the next numbered exercise; that change passed targeted tests and production build.
 
-Network access was granted during authoring; package installation, local tests, production build and anonymous Drive download now work. GitHub CI also runs install, test and build on pushes. Do not interpret source implementation or mocked tests as evidence that live inference has completed successfully.
+Network access was granted during authoring; package installation, local tests, production build, anonymous Drive download and browser inference now work. GitHub CI also runs install, test and build on pushes. Passing technical checks does not establish transcript or translation accuracy.

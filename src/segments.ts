@@ -12,7 +12,10 @@ export function sentencesFromChunks(chunks: Chunk[], duration: number): Sentence
     if (!text) continue;
     const start = Math.min(duration, Math.max(pending?.end ?? result.at(-1)?.end ?? 0, chunk.timestamp[0] ?? 0));
     const end = Math.min(duration, Math.max(start, chunk.timestamp[1] ?? chunks[i+1]?.timestamp[0] ?? duration));
-    const parts = text.match(/[^。！？!?]+[。！？!?]*|[。！？!?]+/gu) ?? [text];
+    const punctuated = text.match(/[^。！？!?]+[。！？!?]*|[。！？!?]+/gu) ?? [text];
+    // Listening exercises often omit punctuation before the next numbered item.
+    // Split at a polite ending followed by whitespace/number, retaining all text.
+    const parts = punctuated.flatMap(part => part.split(/(?<=(?:と思います|です|ます|ません|でした|でしょう)(?:か)?)(?=[\s\d０-９])/u));
     let offset = 0;
     for (const part of parts) {
       const partStart = start + (end-start) * offset/text.length;
@@ -23,7 +26,7 @@ export function sentencesFromChunks(chunks: Chunk[], duration: number): Sentence
       }
       if (!pending) pending = {id:0,start:partStart,end:partEnd,text:part,approximate:parts.length>1};
       else { pending.text += part; pending.end = partEnd; pending.approximate ||= parts.length>1; }
-      if (/[。！？!?]$/u.test(part) || pending.text.length >= 100) { result.push(pending); pending=undefined; }
+      if (/(?:[。！？!?]|(?:です|ます|ません|でした|でしょう)(?:か)?)$/u.test(part) || pending.text.length >= 100) { result.push(pending); pending=undefined; }
     }
   }
   if (pending) result.push(pending);

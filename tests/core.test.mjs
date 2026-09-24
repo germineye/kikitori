@@ -58,6 +58,12 @@ test('clamps missing/out-of-range timestamps and does not highlight silence',()=
   assert.deepEqual(sentencesFromChunks([{text:'',timestamp:[0,1]}],1),[]);
 });
 test('clock handles invalid and long durations',()=>{assert.equal(clock(NaN),'00:00');assert.equal(clock(-1),'00:00');assert.equal(clock(3661),'61:01');});
+test('unpunctuated polite answers do not swallow the next numbered exercise',()=>{
+  const out=sentencesFromChunks([{text:'大丈夫だと思います',timestamp:[0,3]},{text:'2 次は何ですか',timestamp:[4,7]}],7);
+  assert.equal(out.length,2);assert.equal(out[0].text,'大丈夫だと思います');
+  const inside=sentencesFromChunks([{text:'そう思います3 次の問題です',timestamp:[0,6]}],6);
+  assert.equal(inside.length,2);assert.equal(inside[0].text,'そう思います');assert.ok(inside.every(s=>s.approximate));
+});
 
 let hasParser=true;try{await import('linkedom');}catch{hasParser=false;}
 test('Drive confirmation form keeps original file and rejects substituted IDs',{skip:!hasParser&&'Install dependencies to run HTML confirmation tests'},async()=>{
