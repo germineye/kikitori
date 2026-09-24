@@ -86,6 +86,12 @@ test('question-ending ka and numbered prompt stay with their spoken sentence',()
   assert.equal(out[0].text,'今日来ますか?');
   assert.equal(out[1].text,'6。図書館は開いていますか?');
 });
+test('unpunctuated question and answer become separate listening units',()=>{
+  const together=sentencesFromChunks([{text:'今日は休みですかええ休みだと思います',timestamp:[0,8]}],8);
+  assert.deepEqual(together.map(s=>s.text),['今日は休みですか','ええ休みだと思います']);
+  const words=sentencesFromChunks([{text:'教室にいますか',timestamp:[0,3]},{text:'いえいないと思います',timestamp:[3,6]}],6);
+  assert.deepEqual(words.map(s=>s.text),['教室にいますか','いえいないと思います']);
+});
 
 let hasParser=true;try{await import('linkedom');}catch{hasParser=false;}
 test('Drive confirmation form keeps original file and rejects substituted IDs',{skip:!hasParser&&'Install dependencies to run HTML confirmation tests'},async()=>{

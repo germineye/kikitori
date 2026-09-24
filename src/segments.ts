@@ -15,7 +15,7 @@ export function sentencesFromChunks(chunks: Chunk[], duration: number): Sentence
     const punctuated = text.match(/[^。！？!?]+[。！？!?]*|[。！？!?]+/gu) ?? [text];
     // Listening exercises often omit punctuation before the next numbered item.
     // Split at a polite ending followed by whitespace/number, retaining all text.
-    const parts = punctuated.flatMap(part => part.split(/(?<=(?:と思います|です|ます|ません|でした|でしょう)(?:か)?)(?=[\s\d０-９])/u));
+    const parts = punctuated.flatMap(part => part.split(/(?<=(?:と思います|です|ます|ません|でした|でしょう)(?:か)?)(?=[\s\d０-９])/u).flatMap(fragment => fragment.split(/(?<=か)(?=(?:ええ|いいえ|いえ|はい))/u)));
     let offset = 0;
     for (const part of parts) {
       const partStart = start + (end-start) * offset/text.length;
@@ -24,7 +24,8 @@ export function sentencesFromChunks(chunks: Chunk[], duration: number): Sentence
       const gap = pending ? partStart - pending.end : 0;
       const exerciseLabel = pending && /^[\d０-９一二三四五六七八九十]+[。、.]?$/u.test(pending.text.trim());
       const nextExercise = pending && /(?:です|ます|ません|でした|でしょう)(?:か)?$/u.test(pending.text.trim()) && /^[\s\d０-９]/u.test(part);
-      if (pending && ((gap > 0.9 && !exerciseLabel) || pending.text.length + part.length > 100 || nextExercise)) {
+      const answerAfterQuestion = pending && /(?:です|ます|ました|ません|でしょう)か$/u.test(pending.text.trim()) && /^(?:ええ|いいえ|いえ|はい)/u.test(part);
+      if (pending && ((gap > 0.9 && !exerciseLabel) || pending.text.length + part.length > 100 || nextExercise || answerAfterQuestion)) {
         result.push(pending); pending = undefined;
       }
       if (!pending) pending = {id:0,start:partStart,end:partEnd,text:part,approximate:parts.length>1};
