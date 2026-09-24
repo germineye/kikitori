@@ -5,12 +5,11 @@ import { loadTokenizer, rubyText } from './furigana';
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML=`
 <div class="shell">
-  <header><a class="brand" href="${import.meta.env.BASE_URL}" aria-label="Kikitori — trang đầu"><span class="seal" lang="ja">聞</span><span>KIKITORI <small lang="ja">聞き取り</small></span></a><span class="edition">聴解ノート <span> / 01</span></span></header>
+  <header><a class="brand" href="${import.meta.env.BASE_URL}" aria-label="Kikitori — trang đầu"><span class="seal" lang="ja">聞</span><span>KIKITORI <small lang="ja">聞き取り</small></span></a></header>
   <main>
-    <section class="intro"><p class="eyebrow">JAPANESE LISTENING NOTEBOOK</p><h1 lang="ja">一文ずつ、<br class="mobile-break">聞いてみよう。</h1><p>Nghe và đọc. Từng câu một.</p></section>
     <section class="source" aria-labelledby="source-title"><div class="section-label"><h2 id="source-title">01 <span>Mở bài nghe</span></h2><span>MP3 · WAV · M4A · OGG</span></div>
-      <form id="drive-form"><label for="drive-url">Link Google Drive</label><div class="input-row"><input id="drive-url" type="url" placeholder="https://drive.google.com/file/d/…" required autocomplete="off" spellcheck="false"/><button class="primary" id="open-drive">Mở audio <span aria-hidden="true">↗</span></button></div></form>
-      <div class="source-bottom"><p id="drive-note">File cần bật “Anyone with the link” và cho phép tải xuống.</p><span>hoặc <button id="choose-file" class="text-button">chọn file trên máy</button></span><input id="file" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.webm" hidden/></div>
+      <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Kéo thả file audio hoặc nhấn để chọn file"><span class="drop-icon" aria-hidden="true">↧</span><strong>Kéo thả file audio vào đây</strong><span>hoặc nhấn để chọn file trên máy</span></div>
+      <input id="file" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.webm" hidden/>
       <p class="limit">Tối đa 100 MB · 30 phút</p>
     </section>
     <section id="workspace" hidden aria-label="Bài nghe hiện tại">
@@ -24,35 +23,30 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML=`
     <div id="status" class="status" role="status" aria-live="polite" hidden></div>
     <div id="error" class="error" role="alert" hidden></div>
     <section class="transcript-section" aria-labelledby="transcript-title"><div class="section-label transcript-heading"><h2 id="transcript-title">02 <span>Bản nghe</span><small id="sentence-count"></small></h2><fieldset class="furigana"><legend>Furigana</legend><label><input type="radio" name="furigana" value="hover" checked/><span>Hover</span></label><label><input type="radio" name="furigana" value="always"/><span>Always</span></label></fieldset></div>
-      <div id="empty"><span class="empty-mark" lang="ja">あ</span><p>Bài nghe của bạn bắt đầu ở đây.</p><span>Mở audio, rồi tạo transcript để nghe lại từng câu.</span></div>
+      <div id="empty"><span class="empty-mark" lang="ja">あ</span><p>Bài nghe của bạn bắt đầu ở đây.</p><span>Chọn hoặc kéo thả audio, rồi tạo transcript để nghe lại từng câu.</span></div>
       <div id="transcript"></div>
       <p id="transcript-note" class="transcript-note" hidden>Chạm hoặc nhấn Enter vào câu để nghe từ đó. Furigana hiện khi di chuột hoặc lấy nét; trên điện thoại có thể chọn Always. Mốc có dấu ≈ là thời gian ước lượng khi tách câu. AI có thể nghe hoặc đọc tên riêng sai.</p>
     </section>
   </main>
-  <footer><span lang="ja">少しずつ、毎日。</span><span>Audio local ở lại trên máy · Audio Drive đi qua máy chủ chuyển tiếp, không lưu lại.</span></footer>
+  <footer><span lang="ja">少しずつ、毎日。</span><span>Audio và transcript ở lại trên máy bạn.</span></footer>
 </div>`;
 
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const audio=$<HTMLAudioElement>('audio');
-const driveInput=$<HTMLInputElement>('drive-url');
-const driveEndpoint=import.meta.env.VITE_DRIVE_RELAY_URL?.trim()||'/api/drive';
-const driveUnavailable=driveEndpoint==='/api/drive'&&location.hostname.endsWith('.github.io');
-if(driveUnavailable)$('drive-note').textContent='Google Drive chưa được kết nối trên bản Pages. Audio từ máy vẫn dùng được.';
+const dropzone=$<HTMLDivElement>('dropzone');
 const seek=$<HTMLInputElement>('seek');
 const play=$<HTMLButtonElement>('play');
 const transcribe=$<HTMLButtonElement>('transcribe');
 let blob:Blob|undefined;let objectURL='';let sentences:Sentence[]=[];let worker:Worker|undefined;
-let loading=false;let processing=false;let generation=0;let active=-1;let pendingRequest:AbortController|undefined;
+let processing=false;let generation=0;let active=-1;
 const rows=new Map<number,HTMLElement>();
 function status(text:string){$('status').textContent=text;$('status').hidden=!text;}
 function error(text:string){$('error').textContent=text;$('error').hidden=!text;}
 function controls(){
-  $<HTMLButtonElement>('open-drive').disabled=loading||driveUnavailable;
-  $<HTMLButtonElement>('choose-file').disabled=loading;
-  transcribe.disabled=loading||processing||!blob;
-  $('cancel').hidden=!processing&&!loading;
+  transcribe.disabled=processing||!blob;
+  $('cancel').hidden=!processing;
 }
-function stop(){generation++;pendingRequest?.abort();pendingRequest=undefined;worker?.terminate();worker=undefined;processing=false;loading=false;controls();}
+function stop(){generation++;worker?.terminate();worker=undefined;processing=false;controls();}
 function resetTranscript(){sentences=[];rows.clear();active=-1;$('transcript').replaceChildren();$('empty').hidden=false;$('transcript-note').hidden=true;$('sentence-count').textContent='';}
 async function openBlob(next:Blob,name:string){
   if(next.size>MAX_BYTES||!next.size)throw new Error('Audio cần nhỏ hơn 100 MB và không được rỗng.');
@@ -61,23 +55,20 @@ async function openBlob(next:Blob,name:string){
   blob=next;objectURL=URL.createObjectURL(next);audio.src=objectURL;audio.playbackRate=Number($<HTMLInputElement>('speed').value);
   $('filename').textContent=name;$('workspace').hidden=false;seek.value='0';seek.max='1';$('duration').textContent='00:00';$('time').textContent='00:00';$('duration-label').textContent='';controls();
 }
-$('drive-form').addEventListener('submit',async event=>{
-  event.preventDefault();stop();error('');loading=true;controls();status('Đang mở audio từ Google Drive…');
-  const run=generation;pendingRequest=new AbortController();
-  try{
-    const link=driveInput.value.trim();
-    if(driveUnavailable)throw new Error('Đường tải Google Drive chưa được kết nối. Hãy thử lại sau.');
-    const response=await fetch(driveEndpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:link}),signal:pendingRequest.signal});
-    if(!response.ok){const data=await response.json().catch(()=>({error:'Không kết nối được đường tải Drive.'}));throw new Error(data.error);}
-    const nextBlob=await response.blob();let name='Google Drive audio';
-    try{name=decodeURIComponent(response.headers.get('x-audio-name')??name);}catch{/* fallback */}
-    if(run!==generation)return;
-    await openBlob(nextBlob,name);
-  }catch(err){if(run===generation){status('');error(err instanceof TypeError?'Không kết nối được máy chủ mở Google Drive. Hãy thử lại sau.':err instanceof Error?err.message:'Không mở được Drive.');}}
-  finally{if(run===generation){loading=false;controls();}}
-});
-$('choose-file').addEventListener('click',()=>$('file').click());
-$('file').addEventListener('change',async()=>{const input=$<HTMLInputElement>('file');const file=input.files?.[0];if(file){try{await openBlob(file,file.name);}catch(err){error((err as Error).message);}}input.value='';});
+function validFile(file:File){return file.type.startsWith('audio/')||/\.(mp3|wav|m4a|ogg|flac|webm)$/i.test(file.name);}
+async function loadFile(file:File){
+  if(!validFile(file)){error('Chọn file audio MP3, WAV, M4A, OGG, FLAC hoặc WebM.');return;}
+  try{await openBlob(file,file.name);}catch(err){error((err as Error).message);}
+}
+dropzone.addEventListener('click',()=>$<HTMLInputElement>('file').click());
+dropzone.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();$<HTMLInputElement>('file').click();}});
+$('file').addEventListener('change',async()=>{const input=$<HTMLInputElement>('file');const file=input.files?.[0];if(file)await loadFile(file);input.value='';});
+let dragDepth=0;
+dropzone.addEventListener('dragenter',event=>{event.preventDefault();dragDepth++;dropzone.classList.add('dragging');});
+dropzone.addEventListener('dragover',event=>{event.preventDefault();if(event.dataTransfer)event.dataTransfer.dropEffect='copy';});
+dropzone.addEventListener('dragleave',event=>{event.preventDefault();dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)dropzone.classList.remove('dragging');});
+dropzone.addEventListener('drop',async event=>{event.preventDefault();dragDepth=0;dropzone.classList.remove('dragging');const files=event.dataTransfer?.files;if(!files?.length)return;if(files.length!==1){error('Chỉ chọn một file audio mỗi lần.');return;}await loadFile(files[0]);});
+for(const name of ['dragover','drop'])window.addEventListener(name,event=>{if([...((event as DragEvent).dataTransfer?.types??[])].includes('Files'))event.preventDefault();});
 $('cancel').addEventListener('click',()=>{stop();status('Đã dừng. Bạn vẫn có thể nghe audio và đọc những câu đã có.');});
 play.addEventListener('click',async()=>{if(audio.paused){try{await audio.play();}catch{error('Không phát được audio. Hãy thử định dạng khác.');}}else audio.pause();});
 audio.addEventListener('play',()=>{play.textContent='Ⅱ';play.setAttribute('aria-label','Tạm dừng audio');});
