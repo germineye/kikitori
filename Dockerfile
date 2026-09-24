@@ -1,7 +1,7 @@
 FROM node:24-bookworm-slim
 WORKDIR /app
 RUN corepack enable
-COPY package.json ./
+COPY package.json pnpm-workspace.yaml ./
 RUN corepack pnpm install
 COPY . .
 RUN corepack pnpm build
