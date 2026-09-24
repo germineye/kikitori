@@ -1,5 +1,5 @@
 export type Chunk = { text: string; timestamp: [number | null, number | null] };
-export type Sentence = { id: number; start: number; end: number; text: string; translation?: string; approximate: boolean };
+export type Sentence = { id: number; start: number; end: number; text: string; approximate: boolean };
 
 // Whisper segments may contain several sentences. Boundaries inside a segment are
 // interpolated, never presented as word-aligned timestamps.
@@ -21,7 +21,9 @@ export function sentencesFromChunks(chunks: Chunk[], duration: number): Sentence
       const partStart = start + (end-start) * offset/text.length;
       offset += part.length;
       const partEnd = start + (end-start) * offset/text.length;
-      if (pending && (partStart - pending.end > 1.2 || pending.text.length + part.length > 100)) {
+      const gap = pending ? partStart - pending.end : 0;
+      const nextExercise = pending && /(?:です|ます|ません|でした|でしょう)(?:か)?$/u.test(pending.text.trim()) && /^[\s\d０-９]/u.test(part);
+      if (pending && (gap > 0.9 || pending.text.length + part.length > 100 || nextExercise)) {
         result.push(pending); pending = undefined;
       }
       if (!pending) pending = {id:0,start:partStart,end:partEnd,text:part,approximate:parts.length>1};

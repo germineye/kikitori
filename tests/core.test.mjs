@@ -64,6 +64,17 @@ test('unpunctuated polite answers do not swallow the next numbered exercise',()=
   const inside=sentencesFromChunks([{text:'そう思います3 次の問題です',timestamp:[0,6]}],6);
   assert.equal(inside.length,2);assert.equal(inside[0].text,'そう思います');assert.ok(inside.every(s=>s.approximate));
 });
+test('word timestamps place sentence starts at spoken word boundaries',()=>{
+  const out=sentencesFromChunks([
+    {text:'昨日は',timestamp:[1,1.7]},
+    {text:'晴れでした。',timestamp:[1.7,2.6]},
+    {text:'二番、',timestamp:[3.3,3.8]},
+    {text:'図書館へ行きます。',timestamp:[3.8,5.1]}
+  ],6);
+  assert.equal(out.length,2);
+  assert.deepEqual(out.map(s=>s.start),[1,3.3]);
+  assert.ok(out.every(s=>!s.approximate));
+});
 
 let hasParser=true;try{await import('linkedom');}catch{hasParser=false;}
 test('Drive confirmation form keeps original file and rejects substituted IDs',{skip:!hasParser&&'Install dependencies to run HTML confirmation tests'},async()=>{

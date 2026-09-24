@@ -4,9 +4,9 @@ declare global { interface Window { kuromoji: { builder(options: {dicPath:string
 let ready: Promise<Tokenizer> | undefined;
 export function loadTokenizer(): Promise<Tokenizer> {
   return ready ??= new Promise<Tokenizer>((resolve,reject)=>{
-    const script = document.createElement('script'); script.src='/vendor/kuromoji.js';
+    const script = document.createElement('script'); script.src=`${import.meta.env.BASE_URL}vendor/kuromoji.js`;
     script.onerror=()=>reject(new Error('Không tải được từ điển furigana. Hãy thử lại.'));
-    script.onload=()=>window.kuromoji.builder({dicPath:'/vendor/dict/'}).build((err,tokenizer)=>err?reject(err):resolve(tokenizer));
+    script.onload=()=>window.kuromoji.builder({dicPath:`${import.meta.env.BASE_URL}vendor/dict/`}).build((err,tokenizer)=>err?reject(err):resolve(tokenizer));
     document.head.append(script);
   }).catch(err=>{ ready=undefined; throw err; });
 }
