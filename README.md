@@ -60,4 +60,3 @@ Application source: MIT. Whisper model: Apache-2.0. **NLLB weights: CC-BY-NC-4.0
 See [VALIDATION.md](VALIDATION.md) for the actual checks completed in the authoring environment and remaining verification work.
 
 References: [Transformers.js pipelines](https://huggingface.co/docs/transformers.js/api/pipelines), [Whisper Base ONNX](https://huggingface.co/Xenova/whisper-base), [NLLB ONNX](https://huggingface.co/Xenova/nllb-200-distilled-600M), [Drive download guidance](https://developers.google.com/workspace/drive/api/guides/manage-downloads), [Drive resource keys](https://developers.google.com/workspace/drive/api/guides/resource-keys).
-

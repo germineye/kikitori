@@ -1,0 +1,21 @@
+{
+  "name": "kikitori",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.18" },
+  "scripts": {
+    "assets": "node scripts/assets.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "pnpm assets && tsc --noEmit && vite build",
+    "start": "node server/index.mjs",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "3.8.1",
+    "kuromoji": "0.1.2",
+    "linkedom": "0.18.12"
+  },
+  "devDependencies": { "typescript": "~5.9.3", "vite": "^7.3.1", "@types/node": "^22.19.0" },
+  "packageManager": "pnpm@11.19.0"
+}
