@@ -32,7 +32,7 @@ self.onmessage=async(event:MessageEvent<{samples:Float32Array;duration:number}>)
         // TranslationPipeline accepts language codes at runtime; v3's inherited
         // GenerationConfig type does not declare these tokenizer options.
         const translationOptions={src_lang:'jpn_Jpan',tgt_lang:'vie_Latn',max_new_tokens:256};
-        const output=await translator(sentence.text,translationOptions);
+        const output=await translator(sentence.text,translationOptions as unknown as Parameters<typeof translator>[1]);
         const first=output[0];
         const translated=Array.isArray(first)?first[0]:first;
         self.postMessage({type:'translation',id:sentence.id,text:translated.translation_text});

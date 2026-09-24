@@ -2,8 +2,11 @@
 
 ## Completed locally
 
-- 12 deterministic core tests passed, zero failures.
-- 1 confirmation-page parser test skipped because dependencies are not installed.
+- 13 deterministic core tests passed, zero failures or skips (including Drive confirmation-form parsing).
+- Dependencies installed and pnpm lockfile generated.
+- TypeScript check and Vite production build passed.
+- Live anonymous Drive download succeeded for the user-provided MP3 (1,685,683 bytes), using the actual relay implementation.
+- The production browser app opened the same Drive link as 122.mp3, duration 01:44.
 - All five TypeScript modules parse successfully after Node's TypeScript stripping. This is syntax checking, not TypeScript type checking.
 - Browser UI opened successfully using a temporary source-only verification server (not the production Vite build).
 - Local WAV selected through the real file picker; duration displayed as 00:04.
@@ -14,9 +17,8 @@
 
 ## Remaining verification
 
-- Dependency installation, lockfile generation, TypeScript check and production bundle.
-- Live anonymous Drive download, including confirmation pages.
+- Live Google confirmation-page behavior for larger files (parser is covered by fixtures).
 - Actual Whisper and NLLB inference in a browser, Japanese accuracy and Vietnamese translation quality on a choukai recording.
 - Furigana dictionary loading and sentence interaction with real inference results.
 
-The authoring environment blocked package-registry and direct Drive network access. GitHub CI runs the install, test and build steps on pushes. Do not interpret source implementation or mocked tests as evidence that live inference has completed successfully.
+Network access was granted during authoring; package installation, local tests, production build and anonymous Drive download now work. GitHub CI also runs install, test and build on pushes. Do not interpret source implementation or mocked tests as evidence that live inference has completed successfully.
