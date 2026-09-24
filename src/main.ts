@@ -10,7 +10,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML=`
     <section class="intro"><p class="eyebrow">JAPANESE LISTENING NOTEBOOK</p><h1 lang="ja">一文ずつ、<br class="mobile-break">聞いてみよう。</h1><p>Nghe và đọc. Từng câu một.</p></section>
     <section class="source" aria-labelledby="source-title"><div class="section-label"><h2 id="source-title">01 <span>Mở bài nghe</span></h2><span>MP3 · WAV · M4A · OGG</span></div>
       <form id="drive-form"><label for="drive-url">Link Google Drive</label><div class="input-row"><input id="drive-url" type="url" placeholder="https://drive.google.com/file/d/…" required autocomplete="off" spellcheck="false"/><button class="primary" id="open-drive">Mở audio <span aria-hidden="true">↗</span></button></div></form>
-      <div class="source-bottom"><p>File cần bật “Anyone with the link” và cho phép tải xuống.</p><span>hoặc <button id="choose-file" class="text-button">chọn file trên máy</button></span><input id="file" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.webm" hidden/></div>
+      <div class="source-bottom"><p id="drive-note">File cần bật “Anyone with the link” và cho phép tải xuống.</p><span>hoặc <button id="choose-file" class="text-button">chọn file trên máy</button></span><input id="file" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.webm" hidden/></div>
       <p class="limit">Tối đa 100 MB · 30 phút</p>
     </section>
     <section id="workspace" hidden aria-label="Bài nghe hiện tại">
@@ -36,6 +36,8 @@ const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const audio=$<HTMLAudioElement>('audio');
 const driveInput=$<HTMLInputElement>('drive-url');
 const driveEndpoint=import.meta.env.VITE_DRIVE_RELAY_URL?.trim()||'/api/drive';
+const driveUnavailable=driveEndpoint==='/api/drive'&&location.hostname.endsWith('.github.io');
+if(driveUnavailable)$('drive-note').textContent='Google Drive chưa được kết nối trên bản Pages. Audio từ máy vẫn dùng được.';
 const seek=$<HTMLInputElement>('seek');
 const play=$<HTMLButtonElement>('play');
 const transcribe=$<HTMLButtonElement>('transcribe');
@@ -45,7 +47,7 @@ const rows=new Map<number,HTMLElement>();
 function status(text:string){$('status').textContent=text;$('status').hidden=!text;}
 function error(text:string){$('error').textContent=text;$('error').hidden=!text;}
 function controls(){
-  $<HTMLButtonElement>('open-drive').disabled=loading;
+  $<HTMLButtonElement>('open-drive').disabled=loading||driveUnavailable;
   $<HTMLButtonElement>('choose-file').disabled=loading;
   transcribe.disabled=loading||processing||!blob;
   $('cancel').hidden=!processing&&!loading;
@@ -64,7 +66,7 @@ $('drive-form').addEventListener('submit',async event=>{
   const run=generation;pendingRequest=new AbortController();
   try{
     const link=driveInput.value.trim();
-    if(driveEndpoint==='/api/drive'&&location.hostname.endsWith('.github.io'))throw new Error('Đường tải Google Drive chưa được kết nối. Hãy thử lại sau.');
+    if(driveUnavailable)throw new Error('Đường tải Google Drive chưa được kết nối. Hãy thử lại sau.');
     const response=await fetch(driveEndpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:link}),signal:pendingRequest.signal});
     if(!response.ok){const data=await response.json().catch(()=>({error:'Không kết nối được đường tải Drive.'}));throw new Error(data.error);}
     const nextBlob=await response.blob();let name='Google Drive audio';
@@ -123,3 +125,4 @@ transcribe.addEventListener('click',async()=>{
   }catch(err){if(run===generation){processing=false;controls();status('');error((err as Error).message);}}
 });
 window.addEventListener('pagehide',()=>{stop();if(objectURL)URL.revokeObjectURL(objectURL);});
+controls();

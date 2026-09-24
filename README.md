@@ -10,7 +10,7 @@ A quiet Japanese listening notebook for Vietnamese learners. Open an audio file,
 - Sentence timestamps, click/keyboard seek-and-play, current-sentence highlighting, 0.5–1.5× speed slider.
 - Dictionary furigana, hidden until word hover or sentence keyboard focus. Always mode for full furigana and touch devices.
 - Progress messages and cancellation.
-- No account, API key, chatbot, export or database.
+- No listener account, API key, chatbot, export or database.
 
 ## Run
 
