@@ -33,15 +33,17 @@ Production serves the app and `/api/drive` together on `http://localhost:8787`. 
 
 ## GitHub Pages
 
-The `Deploy GitHub Pages` workflow builds the frontend with `/kikitori/` as its base path and publishes `dist`. In Settings → Pages, choose **GitHub Actions** as the source. Local file transcription works on this static deployment. Google Drive links need the Node relay and therefore do **not** work on GitHub Pages alone; deploy the included server on a service that runs Node to offer the complete experience. The UI reports this clearly when a Pages visitor enters a Drive link.
+The `Deploy GitHub Pages` workflow builds the frontend with `/kikitori/` as its base path and publishes `dist`. In Settings → Pages, choose **GitHub Actions** as the source. The static site uses a small Cloudflare Worker for public Google Drive files; audio recognition stays in the browser.
+
+Deploy the relay with `pnpm dlx wrangler deploy` after signing in to Cloudflare. Wrangler uses [wrangler.toml](wrangler.toml) and [worker/index.mjs](worker/index.mjs). Set the GitHub Actions repository variable `DRIVE_RELAY_URL` to the resulting `https://<name>.<account>.workers.dev/api/drive` URL, then rerun the Pages workflow. The build passes that URL as `VITE_DRIVE_RELAY_URL`; local development keeps using the same-origin Node relay. Until this variable is configured, Drive is unavailable on the Pages deployment.
 
 ## Why a small Drive relay exists
 
-Google Drive preview/download pages are not a reliable CORS-enabled audio API. A Drive iframe can play a file but cannot supply its audio bytes or accurate seek control to an unrelated application. The small Node relay downloads publicly shared audio and returns it to the browser on the app's own origin. It does not run AI or keep files on disk. No paid API or developer key is required.
+Google Drive preview/download pages are not a reliable CORS-enabled audio API. A Drive iframe can play a file but cannot supply its audio bytes to an unrelated application. A relay fetches publicly shared audio and returns it to the browser. GitHub Pages uses the streaming Cloudflare Worker; local development uses the Node relay. Neither runs AI or keeps files on disk. No paid API or developer key is required.
 
-V1 requires **Anyone with the link** and downloads enabled. Restricted school-domain files, login-only links, folders, quota-limited files, and files blocked by Google are not bypassed. The relay follows only allowlisted Google HTTPS hosts, limits redirects/body size/concurrent requests/time, rejects non-audio signatures, and does not forward cookies or credentials. Google's confirmation-page format is not a stable API and may need maintenance.
+V1 requires **Anyone with the link** and downloads enabled. Restricted school-domain files, login-only links, folders, quota-limited files, and files blocked by Google are not bypassed. Both relays follow only allowlisted Google HTTPS hosts, limit redirects and audio size, reject non-audio signatures, and do not forward cookies or credentials. The Worker allows browser calls only from `https://germineye.github.io` and streams audio to stay within its memory limit. Google's confirmation-page format is not a stable API and may need maintenance.
 
-**Static-only hosting such as GitHub Pages cannot provide the complete Drive flow by itself.** Deploy the included server with the built frontend. Free hosting is possible within provider limits but is not an unlimited free-service guarantee.
+Cloudflare's Free Worker request and CPU limits apply. Deploying the Worker is an additional account setup step, but users stay on the GitHub Pages URL without a sleeping web server.
 
 ## Models, accuracy and resource usage
 
@@ -53,14 +55,15 @@ If the model cannot load or has insufficient memory, the UI reports an error. St
 
 ## Privacy and licenses
 
-Local audio never leaves the browser. Drive audio passes through the relay in memory and is not persisted. No audio, transcripts, Drive links, or user files are committed as fixtures. The app makes requests to Hugging Face for model files and Google Fonts for fonts. There are no analytics.
+Local audio never leaves the browser. Drive audio and its public link pass through Cloudflare's Worker (or the local Node relay) and are not persisted by the app. No audio, transcripts, Drive links, or user files are committed as fixtures. The app makes requests to Hugging Face for model files and Google Fonts for fonts. There are no analytics.
 
 Application source: MIT. Whisper model: Apache-2.0. kuromoji/IPADIC retains its upstream licenses. Review model and dictionary licenses before commercial use.
 
 ## Verification
 
-`pnpm test` covers Drive URL validation, redirect allowlists, permission/rate/size errors, audio sniffing, sentence grouping, word boundaries, approximate timestamps, silence highlighting, and the Drive confirmation form. The confirmation-form test is skipped until dependencies are installed. These are deterministic tests; they do not claim live Google or model inference success.
+`pnpm test` covers both relay flows, Drive URL validation, redirect allowlists, permission/rate/size errors, audio sniffing, sentence grouping, word boundaries, approximate timestamps, silence highlighting, and the Drive confirmation form. These deterministic tests do not establish that Cloudflare's IP can download a particular Drive file; test the deployed Worker with a public audio link before sharing the site.
 
 See [VALIDATION.md](VALIDATION.md) for the actual checks completed in the authoring environment and remaining verification work.
 
 References: [Transformers.js pipelines](https://huggingface.co/docs/transformers.js/api/pipelines), [Whisper Small timestamped ONNX](https://huggingface.co/onnx-community/whisper-small_timestamped), [Vite GitHub Pages guide](https://vite.dev/guide/static-deploy.html#github-pages), [Drive download guidance](https://developers.google.com/workspace/drive/api/guides/manage-downloads), [Drive resource keys](https://developers.google.com/workspace/drive/api/guides/resource-keys).
+

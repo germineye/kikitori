@@ -30,9 +30,11 @@ jobs:
       - run: pnpm build
         env:
           GITHUB_PAGES: 'true'
+          VITE_DRIVE_RELAY_URL: ${{ vars.DRIVE_RELAY_URL }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
       - id: deployment
         uses: actions/deploy-pages@v4
+

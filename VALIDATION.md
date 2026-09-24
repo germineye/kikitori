@@ -1,11 +1,18 @@
 # Validation status
 
+## Streaming Drive relay update
+
+- The Cloudflare Worker implementation follows the same public-file/allowlisted-host policy as the Node relay and streams audio without buffering the full file.
+- `pnpm test` passes 21 deterministic tests, including CORS, redirects, Drive confirmation, audio response, and size limits for the Worker. `pnpm build` passes.
+- A live call through the Worker handler from the authoring environment returned the user's public `122.mp3` (1,685,683 bytes, audio/mpeg). This confirms the code path locally; deployment and a Cloudflare-origin test remain outstanding.
+- A direct browser fetch of the Google download URL failed. The GitHub Pages frontend therefore requires the configured Worker URL; a response that succeeds from Node does not prove browser CORS access.
+
 ## GitHub Pages and transcription update
 
 - GitHub Pages had published the repository root, which served `/src/main.ts` instead of the built app. The repository now selects GitHub Actions as its Pages source, and the deploy workflow publishes `dist` with `/kikitori/` asset paths. The deployed page rendered successfully in a browser.
 - Translation was removed from the UI and worker. Transcript rows now allow selecting Japanese text for browser translation while retaining click and keyboard seek.
 - Whisper Small with word timestamps completed transcription of the user's 01:44 sample in a browser and displayed Japanese rows. This is a functional check, not a measured accuracy benchmark; individual words and names were still wrong. A later sentence-grouping adjustment is covered by deterministic tests.
-- A direct Google Drive link on GitHub Pages displays a clear relay-needed error. GitHub Pages cannot run the included Node relay; its Drive flow remains available when the full server is hosted.
+- Until the Worker URL is configured for the Pages build, a Drive link displays a clear connection-needed error. GitHub Pages cannot run the included Node relay; its Drive flow remains available when the full server is hosted.
 - The Vite dev server's automatic `.gz` content encoding broke kuromoji dictionary loading. A dev-only raw dictionary response now preserves the gzipped bytes; the GitHub Pages response already did so. Furigana after that dev fix still needs a live rerun.
 
 The checks below record the earlier Whisper Base implementation and are retained as historical validation, not claims about the current model.
@@ -32,7 +39,8 @@ The checks below record the earlier Whisper Base implementation and are retained
 ## Remaining verification
 
 - Live Google confirmation-page behavior for larger files (parser is covered by fixtures).
-- Accuracy tuning and evaluation across more recordings. The tested Whisper Base/NLLB baseline made recognizable errors in Japanese words, names and Vietnamese meaning. Treat this as a working prototype, not a reliable answer key.
+- Accuracy tuning and evaluation across more recordings. The tested Whisper Base baseline made recognizable Japanese word and name errors; the current Whisper Small model also made errors on the sample. Treat this as a working prototype, not a reliable answer key.
 - Boundary refinement was added after the live run to stop unpunctuated polite answers from merging into the next numbered exercise; that change passed targeted tests and production build.
 
-Network access was granted during authoring; package installation, local tests, production build, anonymous Drive download and browser inference now work. GitHub CI also runs install, test and build on pushes. Passing technical checks does not establish transcript or translation accuracy.
+Network access was granted during authoring; package installation, local tests, production build, anonymous Drive download and browser inference now work. GitHub CI also runs install, test and build on pushes. Passing technical checks does not establish transcript accuracy.
+

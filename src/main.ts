@@ -35,6 +35,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML=`
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const audio=$<HTMLAudioElement>('audio');
 const driveInput=$<HTMLInputElement>('drive-url');
+const driveEndpoint=import.meta.env.VITE_DRIVE_RELAY_URL?.trim()||'/api/drive';
 const seek=$<HTMLInputElement>('seek');
 const play=$<HTMLButtonElement>('play');
 const transcribe=$<HTMLButtonElement>('transcribe');
@@ -62,12 +63,15 @@ $('drive-form').addEventListener('submit',async event=>{
   event.preventDefault();stop();error('');loading=true;controls();status('Đang mở audio từ Google Drive…');
   const run=generation;pendingRequest=new AbortController();
   try{
-    const response=await fetch('/api/drive',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:driveInput.value.trim()}),signal:pendingRequest.signal});
-    if(!response.ok){const data=await response.json().catch(()=>({error:'Trang này chưa có máy chủ chuyển tiếp Google Drive. GitHub Pages chỉ chạy phần giao diện; cần triển khai server đi kèm để mở link Drive.'}));throw new Error(data.error);}
-    const next=await response.blob();if(run!==generation)return;
-    let name='Google Drive audio';try{name=decodeURIComponent(response.headers.get('x-audio-name')??name);}catch{/* fallback */}
-    await openBlob(next,name);
-  }catch(err){if(run===generation){status('');error(err instanceof Error?err.message:'Không mở được Drive.');}}
+    const link=driveInput.value.trim();
+    if(driveEndpoint==='/api/drive'&&location.hostname.endsWith('.github.io'))throw new Error('Đường tải Google Drive chưa được kết nối. Hãy thử lại sau.');
+    const response=await fetch(driveEndpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:link}),signal:pendingRequest.signal});
+    if(!response.ok){const data=await response.json().catch(()=>({error:'Không kết nối được đường tải Drive.'}));throw new Error(data.error);}
+    const nextBlob=await response.blob();let name='Google Drive audio';
+    try{name=decodeURIComponent(response.headers.get('x-audio-name')??name);}catch{/* fallback */}
+    if(run!==generation)return;
+    await openBlob(nextBlob,name);
+  }catch(err){if(run===generation){status('');error(err instanceof TypeError?'Không kết nối được máy chủ mở Google Drive. Hãy thử lại sau.':err instanceof Error?err.message:'Không mở được Drive.');}}
   finally{if(run===generation){loading=false;controls();}}
 });
 $('choose-file').addEventListener('click',()=>$('file').click());
@@ -119,3 +123,4 @@ transcribe.addEventListener('click',async()=>{
   }catch(err){if(run===generation){processing=false;controls();status('');error((err as Error).message);}}
 });
 window.addEventListener('pagehide',()=>{stop();if(objectURL)URL.revokeObjectURL(objectURL);});
+
