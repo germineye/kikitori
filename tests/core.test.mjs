@@ -75,6 +75,17 @@ test('word timestamps place sentence starts at spoken word boundaries',()=>{
   assert.deepEqual(out.map(s=>s.start),[1,3.3]);
   assert.ok(out.every(s=>!s.approximate));
 });
+test('question-ending ka and numbered prompt stay with their spoken sentence',()=>{
+  const out=sentencesFromChunks([
+    {text:'今日来ます',timestamp:[0,2]},
+    {text:'か?',timestamp:[2,2.5]},
+    {text:'6。',timestamp:[5,5.4]},
+    {text:'図書館は開いていますか?',timestamp:[5.8,9]}
+  ],10);
+  assert.equal(out.length,2);
+  assert.equal(out[0].text,'今日来ますか?');
+  assert.equal(out[1].text,'6。図書館は開いていますか?');
+});
 
 let hasParser=true;try{await import('linkedom');}catch{hasParser=false;}
 test('Drive confirmation form keeps original file and rejects substituted IDs',{skip:!hasParser&&'Install dependencies to run HTML confirmation tests'},async()=>{

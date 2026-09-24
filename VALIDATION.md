@@ -1,5 +1,15 @@
 # Validation status
 
+## GitHub Pages and transcription update
+
+- GitHub Pages had published the repository root, which served `/src/main.ts` instead of the built app. The repository now selects GitHub Actions as its Pages source, and the deploy workflow publishes `dist` with `/kikitori/` asset paths. The deployed page rendered successfully in a browser.
+- Translation was removed from the UI and worker. Transcript rows now allow selecting Japanese text for browser translation while retaining click and keyboard seek.
+- Whisper Small with word timestamps completed transcription of the user's 01:44 sample in a browser and displayed Japanese rows. This is a functional check, not a measured accuracy benchmark; individual words and names were still wrong. A later sentence-grouping adjustment is covered by deterministic tests.
+- A direct Google Drive link on GitHub Pages displays a clear relay-needed error. GitHub Pages cannot run the included Node relay; its Drive flow remains available when the full server is hosted.
+- The Vite dev server's automatic `.gz` content encoding broke kuromoji dictionary loading. A dev-only raw dictionary response now preserves the gzipped bytes; the GitHub Pages response already did so. Furigana after that dev fix still needs a live rerun.
+
+The checks below record the earlier Whisper Base implementation and are retained as historical validation, not claims about the current model.
+
 ## Completed locally
 
 - 14 deterministic core tests passed, zero failures or skips (including Drive confirmation-form parsing and unpunctuated exercise boundaries).

@@ -22,13 +22,14 @@ export function sentencesFromChunks(chunks: Chunk[], duration: number): Sentence
       offset += part.length;
       const partEnd = start + (end-start) * offset/text.length;
       const gap = pending ? partStart - pending.end : 0;
+      const exerciseLabel = pending && /^[\d０-９一二三四五六七八九十]+[。、.]?$/u.test(pending.text.trim());
       const nextExercise = pending && /(?:です|ます|ません|でした|でしょう)(?:か)?$/u.test(pending.text.trim()) && /^[\s\d０-９]/u.test(part);
-      if (pending && (gap > 0.9 || pending.text.length + part.length > 100 || nextExercise)) {
+      if (pending && ((gap > 0.9 && !exerciseLabel) || pending.text.length + part.length > 100 || nextExercise)) {
         result.push(pending); pending = undefined;
       }
       if (!pending) pending = {id:0,start:partStart,end:partEnd,text:part,approximate:parts.length>1};
       else { pending.text += part; pending.end = partEnd; pending.approximate ||= parts.length>1; }
-      if (/(?:[。！？!?]|(?:です|ます|ません|でした|でしょう)(?:か)?)$/u.test(part) || pending.text.length >= 100) { result.push(pending); pending=undefined; }
+      if ((/[。！？!?]$/u.test(part) && !/^[\d０-９一二三四五六七八九十]+[。、.]?$/u.test(pending.text.trim())) || pending.text.length >= 100) { result.push(pending); pending=undefined; }
     }
   }
   if (pending) result.push(pending);
